@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="format-detection" content="telephone=no">
+  <title>南京机电科技 · 十周年祝福</title>
+
+  <!-- Vue 3 CDN -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <!-- Supabase JS SDK -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+  <style>
+    /* ================================================================
+       CSS Reset & Base
+       ================================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%; height: 100%; overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      user-select: none;
+      background: #060E1A;
+    }
+    input, textarea {
+      -webkit-user-select: text;
+      user-select: text;
+      font-family: inherit;
+    }
+
+    /* ================================================================
+       App Container
+       ================================================================ */
+    #app {
+      width: 100%; height: 100%;
+      display: flex; flex-direction: column;
+      background: #060E1A;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* ================================================================
+       Header — 顶部标题栏
+       ================================================================ */
+    .header {
+      flex: 0 0 auto;
+      padding: 12px 16px 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: linear-gradient(180deg, #0D1F3C 0%, #0B1A30 100%);
+      border-bottom: 1px solid rgba(21, 101, 192, 0.25);
+      position: relative;
+      z-index: 10;
+    }
+    .header-logo {
+      width: 38px; height: 38px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #1565C0, #2196F3);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 16px; font-weight: bold;
+      flex-shrink: 0;
+      /* TODO: 替换为公司 Logo <img> */
+    }
+    .header-info { flex: 1; min-width: 0; }
+    .header-company {
+      font-size: clamp(13px, 3.5vw, 15px);
+      font-weight: 600;
+      color: #E8EDF5;
+      letter-spacing: 1px;
+    }
+    .header-subtitle {
+      font-size: clamp(10px, 2.7vw, 12px);
+      color: #64B5F6;
+      margin-top: 2px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .header-count {
+      flex-shrink: 0;
+      background: rgba(212, 168, 67, 0.15);
+      border: 1px solid rgba(212, 168, 67, 0.3);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 11px;
+      color: #D4A843;
+      white-space: nowrap;
+    }
+    .header-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #D4A843, #F0C75E);
+      color: #0B1A30;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 10px;
+      letter-spacing: 0.5px;
+    }
+
+    /* ================================================================
+       Board — 虚拟展板区域
+       ================================================================ */
+    .board-wrapper {
+      flex: 1; position: relative; overflow: hidden;
+      margin: 8px 10px;
+      border-radius: 12px;
+      border: 2px solid rgba(21, 101, 192, 0.2);
+      transition: border-color 0.4s, box-shadow 0.4s;
+    }
+    /* 待粘贴状态 — 蓝色呼吸光效 */
+    .board-wrapper.placement-active {
+      border-color: rgba(33, 150, 243, 0.6);
+      box-shadow: 0 0 24px rgba(33, 150, 243, 0.2), inset 0 0 24px rgba(33, 150, 243, 0.05);
+      animation: boardPulse 2s ease-in-out infinite;
+    }
+    @keyframes boardPulse {
+      0%, 100% { box-shadow: 0 0 24px rgba(33, 150, 243, 0.2), inset 0 0 24px rgba(33, 150, 243, 0.05); }
+      50% { box-shadow: 0 0 40px rgba(33, 150, 243, 0.35), inset 0 0 36px rgba(33, 150, 243, 0.1); }
+    }
+    /* 自选位置模式 */
+    .board-wrapper.manual-placement {
+      cursor: crosshair;
+      border-color: rgba(0, 188, 212, 0.7);
+      box-shadow: 0 0 30px rgba(0, 188, 212, 0.25), inset 0 0 30px rgba(0, 188, 212, 0.08);
+      animation: manualPulse 1.5s ease-in-out infinite;
+    }
+    @keyframes manualPulse {
+      0%, 100% { border-color: rgba(0, 188, 212, 0.5); }
+      50% { border-color: rgba(0, 188, 212, 0.9); }
+    }
+
+    .board {
+      width: 100%; height: 100%;
+      position: relative;
+      overflow: hidden;
+      /* 科技感展板背景 */
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(21, 101, 192, 0.08) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 100%, rgba(0, 188, 212, 0.05) 0%, transparent 50%),
+        linear-gradient(180deg, #0D2137 0%, #0F2842 30%, #0D2137 60%, #0A1B2E 100%);
+    }
+    /* 网格纹理 */
+    .board::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 20px 20px;
+      pointer-events: none;
+    }
+
+    /* ================================================================
+       Tag Cards — 标签卡片
+       ================================================================ */
+    .tag-card {
+      position: absolute;
+      width: 18vw;
+      min-width: 60px;
+      max-width: 82px;
+      background: #FFFFFF;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.15);
+      padding: 6px 6px 5px;
+      z-index: 1;
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: flex; flex-direction: column; align-items: center;
+      /* 图钉在卡片顶部中央偏上 */
+    }
+    .tag-card:active {
+      transform: scale(1.08) !important;
+      z-index: 100 !important;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.35) !important;
+    }
+    /* 新标签动画类 */
+    .tag-card.pin-animate {
+      animation: pinIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+    @keyframes pinIn {
+      0% { transform: translateY(-60px) scale(0.3); opacity: 0; }
+      60% { transform: translateY(4px) scale(1.05); opacity: 1; }
+      80% { transform: translateY(-2px) scale(0.97); }
+      100% { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    /* 图钉 */
+    .pin-icon {
+      width: 16px; height: 16px;
+      margin-top: -14px;
+      margin-bottom: 3px;
+      position: relative;
+      z-index: 2;
+    }
+    .pin-icon svg {
+      width: 100%; height: 100%;
+      filter: drop-shadow(0 1px 1px rgba(0,0,0,0.3));
+    }
+
+    /* 头像 */
+    .tag-avatar {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #E3F2FD, #BBDEFB);
+      flex-shrink: 0;
+      overflow: hidden;
+      border: 1.5px solid rgba(21, 101, 192, 0.2);
+    }
+    .tag-avatar img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .tag-avatar-placeholder {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; color: #1565C0;
+    }
+
+    /* 姓名 */
+    .tag-name {
+      font-size: clamp(9px, 2.3vw, 11px);
+      font-weight: 600;
+      color: #1A2332;
+      margin-top: 3px;
+      text-align: center;
+      line-height: 1.2;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* 寄语 */
+    .tag-message {
+      font-size: clamp(8px, 2vw, 10px);
+      color: #546E7A;
+      text-align: center;
+      line-height: 1.35;
+      margin-top: 2px;
+      max-width: 100%;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      word-break: break-all;
+    }
+
+    /* ================================================================
+       Ghost Tag — 自选位置时的预览标签
+       ================================================================ */
+    .ghost-tag {
+      position: absolute;
+      width: 18vw;
+      min-width: 60px;
+      max-width: 82px;
+      background: rgba(255,255,255,0.5);
+      border: 2px dashed rgba(33, 150, 243, 0.6);
+      border-radius: 6px;
+      padding: 6px 6px 5px;
+      pointer-events: none;
+      z-index: 200;
+      transform: translate(-50%, -50%);
+      display: flex; flex-direction: column; align-items: center;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    .ghost-tag.visible { opacity: 1; }
+    .ghost-tag .pin-icon { opacity: 0.5; }
+    .ghost-crosshair {
+      position: absolute;
+      pointer-events: none;
+      z-index: 201;
+    }
+    .ghost-crosshair::before, .ghost-crosshair::after {
+      content: ''; position: absolute;
+      background: rgba(0, 188, 212, 0.6);
+    }
+    .ghost-crosshair::before {
+      width: 1px; height: 20px;
+      left: 50%; top: -10px;
+      transform: translateX(-50%);
+    }
+    .ghost-crosshair::after {
+      width: 20px; height: 1px;
+      top: 50%; left: -10px;
+      transform: translateY(-50%);
+    }
+
+    /* ================================================================
+       Empty State
+       ================================================================ */
+    .board-empty {
+      position: absolute;
+      inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      color: rgba(255,255,255,0.35);
+      pointer-events: none;
+    }
+    .board-empty-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+      opacity: 0.4;
+      animation: floatUpDown 3s ease-in-out infinite;
+    }
+    @keyframes floatUpDown {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    .board-empty-text {
+      font-size: 14px;
+      letter-spacing: 1px;
+    }
+
+    /* ================================================================
+       Bottom Bar — 底部操作栏
+       ================================================================ */
+    .bottom-bar {
+      flex: 0 0 auto;
+      padding: 10px 16px max(10px, env(safe-area-inset-bottom));
+      display: flex; align-items: center; gap: 12px;
+      background: linear-gradient(0deg, #0B1A30 0%, rgba(11,26,48,0.95) 100%);
+    }
+    .bottom-hint {
+      flex: 1;
+      font-size: clamp(11px, 3vw, 13px);
+      color: #90CAF9;
+      letter-spacing: 0.5px;
+    }
+    .btn {
+      border: none; outline: none;
+      font-size: clamp(13px, 3.5vw, 15px);
+      font-weight: 600;
+      padding: 10px 22px;
+      border-radius: 24px;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      transition: transform 0.15s, box-shadow 0.15s, opacity 0.2s;
+      white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:active { transform: scale(0.95); }
+    .btn-primary {
+      background: linear-gradient(135deg, #1565C0, #2196F3);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(21, 101, 192, 0.4);
+    }
+    .btn-outline {
+      background: transparent;
+      color: #90CAF9;
+      border: 1.5px solid rgba(144, 202, 249, 0.4);
+    }
+    .btn:disabled {
+      opacity: 0.5; pointer-events: none;
+    }
+
+    /* ================================================================
+       Placement Bar — 选择贴法按钮组
+       ================================================================ */
+    .placement-bar {
+      flex: 0 0 auto;
+      padding: 10px 16px max(10px, env(safe-area-inset-bottom));
+      display: flex; gap: 10px;
+      background: linear-gradient(0deg, #0B1A30 0%, rgba(11,26,48,0.95) 100%);
+    }
+    .btn-random {
+      flex: 1;
+      background: linear-gradient(135deg, #1565C0, #2196F3);
+      color: #fff;
+      border: none;
+      font-size: clamp(13px, 3.5vw, 15px);
+      font-weight: 600;
+      padding: 12px;
+      border-radius: 24px;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 14px rgba(21, 101, 192, 0.4);
+      transition: transform 0.15s;
+    }
+    .btn-random:active { transform: scale(0.96); }
+    .btn-manual {
+      flex: 0 0 auto;
+      padding: 12px 18px;
+      background: transparent;
+      color: #00BCD4;
+      border: 1.5px solid rgba(0, 188, 212, 0.5);
+      border-radius: 24px;
+      font-size: clamp(12px, 3.2vw, 14px);
+      font-weight: 500;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      transition: transform 0.15s, background 0.2s;
+    }
+    .btn-manual:active { transform: scale(0.96); background: rgba(0, 188, 212, 0.1); }
+    .placement-timer {
+      width: 100%;
+      text-align: center;
+      font-size: 11px;
+      color: rgba(255,255,255,0.3);
+      margin-top: 4px;
+    }
+
+    /* ================================================================
+       Modal — 创建弹窗（底部 Sheet）
+       ================================================================ */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 500;
+      display: flex; align-items: flex-end; justify-content: center;
+      animation: fadeIn 0.25s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+    .modal-sheet {
+      width: 100%; max-width: 500px;
+      max-height: 75vh;
+      background: #FFFFFF;
+      border-radius: 20px 20px 0 0;
+      padding: 0 20px 24px;
+      overflow-y: auto;
+      animation: slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+      box-shadow: 0 -4px 24px rgba(0,0,0,0.3);
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .modal-handle {
+      width: 36px; height: 4px;
+      background: #DDE4EC;
+      border-radius: 2px;
+      margin: 12px auto 16px;
+    }
+    .modal-title {
+      font-size: 18px; font-weight: 700;
+      color: #0B1A30;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    /* Form */
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-label {
+      display: block;
+      font-size: 13px; font-weight: 600;
+      color: #37474F;
+      margin-bottom: 6px;
+    }
+    .form-input {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid #DDE4EC;
+      border-radius: 10px;
+      font-size: 15px;
+      color: #1A2332;
+      background: #F7F9FC;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-input:focus {
+      border-color: #2196F3;
+      box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+      background: #fff;
+    }
+    .form-textarea {
+      min-height: 90px;
+      resize: none;
+      line-height: 1.5;
+    }
+    .form-counter {
+      text-align: right;
+      font-size: 11px;
+      color: #90A4AE;
+      margin-top: 3px;
+    }
+    .form-counter.warn { color: #EF5350; }
+
+    /* Avatar Upload */
+    .avatar-upload {
+      display: flex; align-items: center; gap: 14px;
+    }
+    .avatar-preview {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      background: #E3F2FD;
+      border: 2px dashed #BBDEFB;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .avatar-preview:active { border-color: #2196F3; }
+    .avatar-preview img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .avatar-preview-placeholder {
+      font-size: 24px; color: #90CAF9;
+    }
+    .avatar-hint {
+      font-size: 12px; color: #90A4AE;
+      line-height: 1.5;
+    }
+    #avatarInput { display: none; }
+
+    .btn-submit {
+      width: 100%;
+      padding: 13px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #1565C0, #2196F3);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 14px rgba(21, 101, 192, 0.35);
+      margin-top: 4px;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-submit:active { transform: scale(0.97); }
+    .btn-submit:disabled { opacity: 0.6; transform: none; }
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ================================================================
+       Toast
+       ================================================================ */
+    .toast-container {
+      position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
+      z-index: 999;
+      pointer-events: none;
+    }
+    .toast {
+      background: #1A2332;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+      animation: toastIn 0.3s ease, toastOut 0.3s ease 2.2s forwards;
+      white-space: nowrap;
+      text-align: center;
+    }
+    .toast.success { border: 1px solid rgba(76, 175, 80, 0.5); }
+    .toast.error { border: 1px solid rgba(244, 67, 54, 0.5); }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(-16px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes toastOut { from { opacity: 1; } to { opacity: 0; } }
+
+    /* ================================================================
+       Loading Skeleton
+       ================================================================ */
+    .loading-overlay {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: rgba(13, 33, 55, 0.9);
+      z-index: 50;
+      pointer-events: none;
+    }
+    .loading-spinner {
+      width: 36px; height: 36px;
+      border: 3px solid rgba(255,255,255,0.15);
+      border-top-color: #2196F3;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 12px;
+    }
+    .loading-text {
+      font-size: 12px; color: rgba(255,255,255,0.4);
+      letter-spacing: 1px;
+    }
+
+    /* ================================================================
+       Decorative Particles
+       ================================================================ */
+    .particles {
+      position: absolute; inset: 0;
+      pointer-events: none; overflow: hidden; z-index: 0;
+    }
+    .particle {
+      position: absolute;
+      width: 3px; height: 3px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 50%;
+      animation: particleFloat linear infinite;
+    }
+    @keyframes particleFloat {
+      0% { transform: translateY(100vh) scale(0); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+    }
+
+    /* ================================================================
+       WeChat compatibility
+       ================================================================ */
+    @media screen and (max-width: 320px) {
+      .tag-card { width: 56px; }
+      .tag-name { font-size: 9px; }
+      .tag-message { font-size: 8px; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <!-- 粒子背景 -->
+  <div class="particles">
+    <div v-for="p in particles" :key="p.id" class="particle"
+         :style="{
+           left: p.left + '%',
+           animationDuration: p.duration + 's',
+           animationDelay: p.delay + 's',
+           width: p.size + 'px',
+           height: p.size + 'px'
+         }"></div>
+  </div>
+
+  <!-- 顶部标题栏 -->
+  <div class="header">
+    <div class="header-logo" @click="showDebug">10</div>
+    <div class="header-info">
+      <div class="header-company">南京机电科技</div>
+      <div class="header-subtitle">
+        <span class="header-badge">10TH</span> 成立十周年 · 员工祝福
+      </div>
+    </div>
+    <div class="header-count" v-if="blessings.length > 0">
+      📌 {{ blessings.length }} 条祝福
+    </div>
+  </div>
+
+  <!-- 虚拟展板 -->
+  <div class="board-wrapper"
+       :class="{
+         'placement-active': showPlacement && !showManualPlace,
+         'manual-placement': showManualPlace
+       }"
+       ref="boardWrapper">
+    <div class="board" ref="board"
+         @click="onBoardClick"
+         @touchmove.prevent="onBoardTouchMove">
+      <!-- 标签卡片 -->
+      <div v-for="(item, index) in blessings" :key="item.id"
+           class="tag-card"
+           :class="{ 'pin-animate': item._animating }"
+           :style="tagStyle(item, index)"
+           @click.stop="viewTag(item)">
+        <div class="pin-icon">
+          <svg viewBox="0 0 24 24"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v5.5c0 .28.22.5.5.5h.6c.28 0 .5-.22.5-.5V16H18v-2l-2-2z" fill="#E53935"/></svg>
+        </div>
+        <div class="tag-avatar">
+          <img v-if="item.avatar_url" :src="item.avatar_url" alt="">
+          <div v-else class="tag-avatar-placeholder">{{ item.name.charAt(0) }}</div>
+        </div>
+        <div class="tag-name">{{ item.name }}</div>
+        <div class="tag-message">{{ item.message }}</div>
+      </div>
+
+      <!-- 空状态 -->
+      <div class="board-empty" v-if="!isLoading && blessings.length === 0 && !showPlacement">
+        <div class="board-empty-icon">📋</div>
+        <div class="board-empty-text">还没有祝福标签，快来创建第一个吧！</div>
+      </div>
+
+      <!-- 加载骨架 -->
+      <div class="loading-overlay" v-if="isLoading">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">加载祝福中...</div>
+      </div>
+
+      <!-- 自选位置：半透明预览标签 -->
+      <div class="ghost-tag" :class="{ visible: ghostVisible }"
+           :style="ghostStyle"
+           v-if="showManualPlace">
+        <div class="pin-icon" style="opacity:0.5">
+          <svg viewBox="0 0 24 24"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v5.5c0 .28.22.5.5.5h.6c.28 0 .5-.22.5-.5V16H18v-2l-2-2z" fill="#E53935"/></svg>
+        </div>
+        <div class="tag-avatar">
+          <div class="tag-avatar-placeholder">{{ pendingForm.name ? pendingForm.name.charAt(0) : '?' }}</div>
+        </div>
+        <div class="tag-name">{{ pendingForm.name || '...' }}</div>
+        <div class="tag-message">{{ pendingForm.message || '...' }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 正常状态：底部操作栏 -->
+  <div class="bottom-bar" v-if="!showPlacement">
+    <div class="bottom-hint">💡 点击下方按钮，创建你的祝福标签吧！</div>
+    <button class="btn btn-primary" @click="openModal">✏️ 写祝福</button>
+  </div>
+
+  <!-- 选择贴法状态：底部按钮组 -->
+  <div v-if="showPlacement">
+    <div class="placement-bar">
+      <button class="btn-random" @click="randomPlace" :disabled="isPlacing">
+        🎲 一键随机上墙
+      </button>
+      <button class="btn-manual" @click="startManualPlace" :disabled="isPlacing"
+              :style="showManualPlace ? {background:'rgba(0,188,212,0.15)',color:'#00E5FF'} : {}">
+        👆 自选位置
+      </button>
+    </div>
+    <div class="placement-timer" v-if="!isPlacing">
+      请选择贴标签方式（{{ countdown }}秒后自动随机上墙）
+    </div>
+    <div class="placement-timer" v-else>
+      正在贴入展板...
+    </div>
+  </div>
+
+  <!-- ========== 创建弹窗 ========== -->
+  <div class="modal-overlay" v-if="showModal" @click.self="closeModal">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-title">✍️ 写下你的十周年祝福</div>
+
+      <!-- 头像 -->
+      <div class="form-group">
+        <label class="form-label">头像（可选）</label>
+        <div class="avatar-upload">
+          <div class="avatar-preview" @click="triggerAvatar">
+            <img v-if="form.avatarPreview" :src="form.avatarPreview" alt="">
+            <span v-else class="avatar-preview-placeholder">📷</span>
+          </div>
+          <div class="avatar-hint">
+            点击上传照片<br>或拍照
+          </div>
+          <input type="file" id="avatarInput" accept="image/*" @change="onAvatarChange">
+        </div>
+      </div>
+
+      <!-- 姓名 -->
+      <div class="form-group">
+        <label class="form-label">你的名字 <span style="color:#EF5350">*</span></label>
+        <input class="form-input" type="text" v-model="form.name"
+               placeholder="请输入你的姓名" maxlength="20">
+      </div>
+
+      <!-- 寄语 -->
+      <div class="form-group">
+        <label class="form-label">祝福寄语 <span style="color:#EF5350">*</span></label>
+        <textarea class="form-input form-textarea" v-model="form.message"
+                  placeholder="写下你对公司十周年的祝福寄语..."
+                  maxlength="200"></textarea>
+        <div class="form-counter" :class="{ warn: form.message.length > 180 }">
+          {{ form.message.length }}/200
+        </div>
+      </div>
+
+      <!-- 提交按钮 -->
+      <button class="btn-submit" @click="submitForm" :disabled="!canSubmit || isSubmitting">
+        <span v-if="isSubmitting" class="spinner"></span>
+        {{ isSubmitting ? '提交中...' : '📌 提交寄语' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast-container">
+    <div v-if="toast.show" class="toast" :class="toast.type">{{ toast.message }}</div>
+  </div>
+</div>
+
+<script>
+// ================================================================
+// 🔧 配置区 — 请替换为你的 Supabase 项目信息
+// ================================================================
+const SUPABASE_CONFIG = {
+  url: 'https://scfbxlmkusgaervlqaui.supabase.co',   // ← 替换为你的 Supabase Project URL
+  anonKey: 'sb_publishable_ZdnIN3Lm4amYy3INmqyhQA_mVOHgOK-',                      // ← 替换为你的 anon public key
+  bucketName: 'avatars'                          // Storage 存储桶名称
+};
+
+// ================================================================
+// Supabase 初始化
+// ================================================================
+let supabase = null;
+try {
+  if (SUPABASE_CONFIG.url.includes('YOUR-PROJECT-ID')) {
+    console.warn('⚠️ 请先在 SUPABASE_CONFIG 中配置你的 Supabase 项目信息');
+  } else {
+    supabase = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+  }
+} catch (e) {
+  console.error('Supabase 初始化失败:', e);
+}
+
+// ================================================================
+// Vue 应用
+// ================================================================
+const { createApp, ref, computed, onMounted, onUnmounted, nextTick } = Vue;
+
+const app = createApp({
+  data() {
+    return {
+      // 数据
+      blessings: [],
+      isLoading: true,
+
+      // UI 状态
+      showModal: false,
+      showPlacement: false,
+      showManualPlace: false,
+      isSubmitting: false,
+      isPlacing: false,
+
+      // 表单
+      form: {
+        name: '',
+        avatarFile: null,
+        avatarPreview: '',
+        message: ''
+      },
+
+      // 待粘贴的数据（表单提交后暂存）
+      pendingForm: { name: '', message: '', avatarPreview: '' },
+
+      // 自选位置
+      ghostX: 50,
+      ghostY: 50,
+      ghostVisible: false,
+
+      // 倒计时
+      countdown: 5,
+      countdownTimer: null,
+      manualPlaceTimer: null,
+
+      // Toast
+      toast: { show: false, message: '', type: 'success' },
+      toastTimer: null,
+
+      // 粒子装饰
+      particles: [],
+
+      // 网格占用追踪
+      occupiedCells: new Set()
+    };
+  },
+
+  computed: {
+    canSubmit() {
+      return this.form.name.trim() && this.form.message.trim() && !this.isSubmitting;
+    },
+    ghostStyle() {
+      return {
+        left: this.ghostX + '%',
+        top: this.ghostY + '%'
+      };
+    }
+  },
+
+  methods: {
+    // ================================================================
+    // 数据加载
+    // ================================================================
+    async loadBlessings() {
+      if (!supabase) {
+        // 无 Supabase 配置时使用演示数据
+        this.isLoading = false;
+        this.showToast('请先配置 Supabase 连接信息', 'error');
+        return;
+      }
+      try {
+        this.isLoading = true;
+        const { data, error } = await supabase
+          .from('blessings')
+          .select('*')
+          .order('created_at', { ascending: true });
+
+        if (error) throw error;
+        this.blessings = (data || []).map(item => ({
+          ...item,
+          _animating: false
+        }));
+        // 重建网格占用
+        this.rebuildOccupiedCells();
+      } catch (e) {
+        console.error('加载祝福失败:', e);
+        this.showToast('加载失败，请检查网络后刷新', 'error');
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    // ================================================================
+    // 弹窗控制
+    // ================================================================
+    openModal() {
+      if (!supabase) {
+        this.showToast('请先配置 Supabase 连接信息', 'error');
+        return;
+      }
+      this.form = { name: '', avatarFile: null, avatarPreview: '', message: '' };
+      this.showModal = true;
+    },
+    closeModal() {
+      if (this.isSubmitting) return;
+      this.showModal = false;
+    },
+
+    // ================================================================
+    // 头像上传
+    // ================================================================
+    triggerAvatar() {
+      document.getElementById('avatarInput').click();
+    },
+    onAvatarChange(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      this.form.avatarFile = file;
+
+      // 生成预览
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        // 压缩图片到 200x200
+        this.compressImage(ev.target.result, 200, 200).then(compressed => {
+          this.form.avatarPreview = compressed;
+        });
+      };
+      reader.readAsDataURL(file);
+    },
+
+    compressImage(dataUrl, maxW, maxH) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let w = img.width, h = img.height;
+          if (w > maxW) { h = h * maxW / w; w = maxW; }
+          if (h > maxH) { w = w * maxH / h; h = maxH; }
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', 0.75));
+        };
+        img.src = dataUrl;
+      });
+    },
+
+    // ================================================================
+    // 表单提交 → 进入选择贴法
+    // ================================================================
+    async submitForm() {
+      if (!this.canSubmit) return;
+      this.isSubmitting = true;
+
+      try {
+        // 上传头像（如果有）
+        let avatarUrl = '';
+        if (this.form.avatarFile) {
+          avatarUrl = await this.uploadAvatar(this.form.avatarFile);
+        }
+
+        // 暂存表单数据
+        this.pendingForm = {
+          name: this.form.name.trim(),
+          message: this.form.message.trim(),
+          avatarUrl: avatarUrl
+        };
+
+        // 关闭弹窗，进入选择贴法状态
+        this.showModal = false;
+        this.showPlacement = true;
+        this.showManualPlace = false;
+        this.isSubmitting = false;
+
+        // 启动 5 秒倒计时
+        this.startCountdown();
+
+      } catch (e) {
+        console.error('提交失败:', e);
+        this.showToast('提交失败，请重试', 'error');
+        this.isSubmitting = false;
+      }
+    },
+
+    async uploadAvatar(file) {
+      // 先压缩
+      const compressed = await this.compressImage(
+        await this.readFileAsDataURL(file), 200, 200
+      );
+      // dataURL → Blob
+      const blob = this.dataURLtoBlob(compressed);
+      const fileName = `avatar_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.jpg`;
+      const fileObj = new File([blob], fileName, { type: 'image/jpeg' });
+
+      const { data, error } = await supabase.storage
+        .from(SUPABASE_CONFIG.bucketName)
+        .upload(fileName, fileObj, { upsert: true });
+
+      if (error) throw error;
+
+      // 获取公开 URL
+      const { data: urlData } = supabase.storage
+        .from(SUPABASE_CONFIG.bucketName)
+        .getPublicUrl(fileName);
+
+      return urlData.publicUrl;
+    },
+
+    readFileAsDataURL(file) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.readAsDataURL(file);
+      });
+    },
+
+    dataURLtoBlob(dataUrl) {
+      const parts = dataUrl.split(',');
+      const mime = parts[0].match(/:(.*?);/)[1];
+      const bytes = atob(parts[1]);
+      const arr = new Uint8Array(bytes.length);
+      for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+      return new Blob([arr], { type: mime });
+    },
+
+    // ================================================================
+    // 倒计时
+    // ================================================================
+    startCountdown() {
+      this.countdown = 5;
+      this.clearCountdown();
+      this.countdownTimer = setInterval(() => {
+        this.countdown--;
+        if (this.countdown <= 0) {
+          this.clearCountdown();
+          if (this.showPlacement && !this.isPlacing) {
+            this.randomPlace();
+          }
+        }
+      }, 1000);
+    },
+    clearCountdown() {
+      if (this.countdownTimer) { clearInterval(this.countdownTimer); this.countdownTimer = null; }
+    },
+
+    // ================================================================
+    // 🎲 随机上墙
+    // ================================================================
+    async randomPlace() {
+      if (this.isPlacing) return;
+      this.clearCountdown();
+      this.isPlacing = true;
+      this.showManualPlace = false;
+
+      const coords = this.getRandomPosition();
+      await this.saveBlessing(coords.x, coords.y);
+    },
+
+    getRandomPosition() {
+      const COLS = 5, ROWS = 10;
+      const cellW = 100 / COLS;
+      const cellH = 100 / ROWS;
+      const availableCells = [];
+
+      for (let row = 0; row < ROWS; row++) {
+        for (let col = 0; col < COLS; col++) {
+          const cellKey = `${col}-${row}`;
+          if (!this.occupiedCells.has(cellKey)) {
+            availableCells.push({ col, row });
+          }
+        }
+      }
+
+      let cell;
+      if (availableCells.length > 0) {
+        // 从空闲格子中随机选
+        cell = availableCells[Math.floor(Math.random() * availableCells.length)];
+      } else {
+        // 全满则随机选任意格子
+        cell = { col: Math.floor(Math.random() * COLS), row: Math.floor(Math.random() * ROWS) };
+      }
+
+      // 在格子内随机偏移
+      const offsetX = (Math.random() - 0.5) * cellW * 0.6;
+      const offsetY = (Math.random() - 0.5) * cellH * 0.6;
+      const x = (cell.col * cellW) + (cellW / 2) + offsetX;
+      const y = (cell.row * cellH) + (cellH / 2) + offsetY;
+
+      return {
+        x: Math.max(4, Math.min(96, x)),
+        y: Math.max(4, Math.min(96, y))
+      };
+    },
+
+    // ================================================================
+    // 👆 自选位置
+    // ================================================================
+    startManualPlace() {
+      if (this.isPlacing) return;
+      this.clearCountdown();
+      this.showManualPlace = true;
+      this.ghostVisible = false;
+      this.showToast('点击展板上任意位置放置标签', 'success');
+    },
+
+    onBoardClick(e) {
+      if (!this.showManualPlace || this.isPlacing) return;
+      if (e.target.closest('.tag-card')) return; // 点击已有标签不触发
+
+      const boardEl = this.$refs.board;
+      const rect = boardEl.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+      this.placeAt(x, y);
+    },
+
+    onBoardTouchMove(e) {
+      if (!this.showManualPlace || this.isPlacing) return;
+      const boardEl = this.$refs.board;
+      const rect = boardEl.getBoundingClientRect();
+      const touch = e.touches[0];
+      this.ghostX = ((touch.clientX - rect.left) / rect.width) * 100;
+      this.ghostY = ((touch.clientY - rect.top) / rect.height) * 100;
+      this.ghostVisible = true;
+    },
+
+    async placeAt(x, y) {
+      this.isPlacing = true;
+      this.showManualPlace = false;
+      this.ghostVisible = false;
+      await this.saveBlessing(x, y);
+    },
+
+    // ================================================================
+    // 保存到 Supabase
+    // ================================================================
+    async saveBlessing(x, y) {
+      try {
+        const rotation = (Math.random() - 0.5) * 12; // ±6° 随机旋转
+
+        const record = {
+          name: this.pendingForm.name,
+          avatar_url: this.pendingForm.avatarUrl,
+          message: this.pendingForm.message,
+          x_position: x,
+          y_position: y
+        };
+
+        const { data, error } = await supabase
+          .from('blessings')
+          .insert(record)
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        // 添加到本地列表并标记动画
+        const newItem = { ...data, _animating: true };
+        this.blessings.push(newItem);
+
+        // 更新网格占用
+        const cellKey = this.getCellKey(x, y);
+        this.occupiedCells.add(cellKey);
+
+        // 保存旋转角度到 localStorage（仅本地使用）
+        this.saveLocalRotation(data.id, rotation);
+
+        // 等待动画结束后重置状态
+        await new Promise(r => setTimeout(r, 700));
+        const idx = this.blessings.findIndex(b => b.id === data.id);
+        if (idx >= 0) this.blessings[idx]._animating = false;
+
+        this.showPlacement = false;
+        this.isPlacing = false;
+        this.pendingForm = { name: '', message: '', avatarUrl: '' };
+        this.showToast('🎉 祝福已上墙！', 'success');
+
+      } catch (e) {
+        console.error('保存失败:', e);
+        this.isPlacing = false;
+        this.showPlacement = false;
+        this.showToast('保存失败，请重试', 'error');
+      }
+    },
+
+    getCellKey(x, y) {
+      const COLS = 5, ROWS = 10;
+      const col = Math.min(COLS - 1, Math.floor(x / (100 / COLS)));
+      const row = Math.min(ROWS - 1, Math.floor(y / (100 / ROWS)));
+      return `${col}-${row}`;
+    },
+
+    rebuildOccupiedCells() {
+      this.occupiedCells = new Set();
+      this.blessings.forEach(b => {
+        this.occupiedCells.add(this.getCellKey(b.x_position, b.y_position));
+      });
+    },
+
+    // ================================================================
+    // 本地存储：旋转角度
+    // ================================================================
+    saveLocalRotation(id, rotation) {
+      try {
+        const saved = JSON.parse(localStorage.getItem('tag_rotations') || '{}');
+        saved[id] = rotation;
+        localStorage.setItem('tag_rotations', JSON.stringify(saved));
+      } catch (e) {}
+    },
+    getLocalRotation(id) {
+      try {
+        const saved = JSON.parse(localStorage.getItem('tag_rotations') || '{}');
+        return saved[id] !== undefined ? saved[id] : 0;
+      } catch (e) { return 0; }
+    },
+
+    // ================================================================
+    // 标签样式计算
+    // ================================================================
+    tagStyle(item, index) {
+      const rotation = this.getLocalRotation(item.id) || ((item.id * 37) % 12 - 6);
+      return {
+        left: item.x_position + '%',
+        top: item.y_position + '%',
+        transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
+        zIndex: index + 1
+      };
+    },
+
+    // ================================================================
+    // 查看标签（点击放大）
+    // ================================================================
+    viewTag(item) {
+      // 简单效果：Toast 显示完整信息
+      this.showToast(`📌 ${item.name}：${item.message}`, 'success');
+    },
+
+    // ================================================================
+    // Toast
+    // ================================================================
+    showToast(message, type = 'success') {
+      if (this.toastTimer) clearTimeout(this.toastTimer);
+      this.toast = { show: true, message, type };
+      this.toastTimer = setTimeout(() => {
+        this.toast.show = false;
+      }, 2500);
+    },
+
+    // ================================================================
+    // 调试
+    // ================================================================
+    showDebug() {
+      if (!supabase) {
+        this.showToast('⚠️ 请先配置 Supabase 连接信息', 'error');
+      }
+    },
+
+    // ================================================================
+    // 粒子生成
+    // ================================================================
+    generateParticles() {
+      const list = [];
+      for (let i = 0; i < 20; i++) {
+        list.push({
+          id: i,
+          left: Math.random() * 100,
+          duration: 12 + Math.random() * 20,
+          delay: Math.random() * 15,
+          size: 2 + Math.random() * 3
+        });
+      }
+      this.particles = list;
+    }
+  },
+
+  mounted() {
+    this.generateParticles();
+    this.loadBlessings();
+
+    // 实时订阅（可选）
+    if (supabase) {
+      supabase
+        .channel('blessings-changes')
+        .on('postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'blessings' },
+          (payload) => {
+            // 检查是否已存在（避免重复添加自己的标签）
+            const exists = this.blessings.find(b => b.id === payload.new.id);
+            if (!exists && !this.isPlacing) {
+              const newItem = { ...payload.new, _animating: true };
+              this.blessings.push(newItem);
+              this.occupiedCells.add(this.getCellKey(payload.new.x_position, payload.new.y_position));
+              setTimeout(() => {
+                const idx = this.blessings.findIndex(b => b.id === payload.new.id);
+                if (idx >= 0) this.blessings[idx]._animating = false;
+              }, 700);
+            }
+          }
+        )
+        .subscribe();
+    }
+  },
+
+  beforeUnmount() {
+    this.clearCountdown();
+  }
+});
+
+app.mount('#app');
+</script>
+
+</body>
+</html>
